@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  title         String
+  description   String        @db.Text
+  imageUrl      String
+  affiliateLink String
+  SEO_title        String  @db.VarChar(60)
+  META_description String  @db.VarChar(140)
+  sourceWebsite SourceWebsite @default(AMAZON)
+  category      Category      @default(ELECTRONICS)
+  subCategory   SubCategory   @default(SMARTPHONES)
+  deals         Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum SourceWebsite {
+  AMAZON
+  FLIPKART
+  MYNTRA
+  OTHER
+}
+
+enum Category {
+  ELECTRONICS
+}
+
+enum SubCategory {
+  SMARTPHONES
+  LAPTOPS
+  HEADPHONES_EARBUDS
+  SMARTWATCHES
+  BLUETOOTH_SPEAKERS
+  LED_SMART_TVS
+  POWER_BANKS
+  DSLR_MIRRORLESS_CAMERAS
+  MOBILE_CHARGERS_CABLES
+  HOME_THEATER_SOUNDBARS
+}
