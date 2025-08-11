@@ -25,8 +25,8 @@ async function bootstrap() {
     .get<string>('CORS_ORIGINS', 'http://localhost:3000')
     .split(',')
     .map(origin => origin.trim());
-  if (!corsOrigins.includes('https://pukka-price-frontend.vercel.app/')) {
-    corsOrigins.push('https://pukka-price-frontend.vercel.app/');
+  if (!corsOrigins.includes('https://pukka-price-frontend.vercel.app')) {
+    corsOrigins.push('https://pukka-price-frontend.vercel.app');
   }
 
   // ✅ Enable CORS for Fastify
