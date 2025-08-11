@@ -7,7 +7,12 @@ import {
   IsBoolean,
   IsIn,
 } from 'class-validator';
-import { SourceWebsite } from '@prisma/client';
+// Define SourceWebsite enum locally if not exported from @prisma/client
+export enum SourceWebsite {
+  AMAZON = 'AMAZON',
+  FLIPKART = 'FLIPKART',
+  // Add other source websites as needed
+}
 
 export class UpdateProductDto {
   @IsString()

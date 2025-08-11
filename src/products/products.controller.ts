@@ -19,8 +19,21 @@ import { FastifyRequest } from 'fastify';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import * as path from 'path';
 
-// Import SubCategory enum from Prisma Client
-import { SubCategory } from '@prisma/client';
+// Define SubCategory enum locally (replace values with your actual subcategories)
+export enum SubCategory {
+  SMARTPHONES = 'SMARTPHONES',
+  LAPTOPS = 'LAPTOPS',
+  TABLETS = 'TABLETS',
+  HEADPHONES_EARBUDS = 'HEADPHONES_EARBUDS',
+  SMARTWATCHES = 'SMARTWATCHES',
+  BLUETOOTH_SPEAKERS = 'BLUETOOTH_SPEAKERS',
+  LED_SMART_TVS = 'LED_SMART_TVS',
+  POWER_BANKS = 'POWER_BANKS',
+  DSLR_MIRRORLESS_CAMERAS = 'DSLR_MIRRORLESS_CAMERAS',
+  MOBILE_CHARGERS_CABLES = 'MOBILE_CHARGERS_CABLES',
+  HOME_THEATER_SOUNDBARS = 'HOME_THEATER_SOUNDBARS',
+ 
+}
 
 @Controller()
 export class ProductsController {
