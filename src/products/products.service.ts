@@ -113,19 +113,21 @@ export class ProductsService {
     // Build where clause
     const where: any = {};
 
-    // Add search condition
+    // Add search condition (case-insensitive, only on title)
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { SEO_title: { contains: search } },
-        { META_description: { contains: search } },
-      ];
+      where.title = { contains: search, mode: 'insensitive' };
     }
 
-    // Add category filter
+    // Add category filter (exact match or slug)
     if (category) {
-      where.category = category;
+      // Try to match exact (case-sensitive), or by slug (case-insensitive)
+      where.OR = where.OR || [];
+      where.OR.push(
+        { category: category },
+        { category: category.toUpperCase() },
+        { category: category.toLowerCase() },
+        { category: { equals: category, mode: 'insensitive' } }
+      );
     }
 
     // Add subCategory filter
