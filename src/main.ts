@@ -19,9 +19,15 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // CORS configuration
+
+  // Add the Vercel frontend URL to allowed CORS origins
   const corsOrigins = configService
     .get<string>('CORS_ORIGINS', 'http://localhost:3000')
-    .split(',');
+    .split(',')
+    .map(origin => origin.trim());
+  if (!corsOrigins.includes('https://pukka-price-frontend.vercel.app/')) {
+    corsOrigins.push('https://pukka-price-frontend.vercel.app/');
+  }
 
   // ✅ Enable CORS for Fastify
   await app.register(fastifyCors, {
