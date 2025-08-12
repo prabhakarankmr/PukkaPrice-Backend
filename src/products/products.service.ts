@@ -113,9 +113,12 @@ export class ProductsService {
     // Build where clause
     const where: any = {};
 
-    // Add search condition (case-insensitive, only on title)
+    // Add search condition (case-insensitive, on title OR description)
     if (search) {
-      where.title = { contains: search, mode: 'insensitive' };
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
     // Add category filter (exact match or slug)
