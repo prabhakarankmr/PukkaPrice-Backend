@@ -28,6 +28,10 @@ async function bootstrap() {
   if (!corsOrigins.includes('https://pukka-price-frontend.vercel.app')) {
     corsOrigins.push('https://pukka-price-frontend.vercel.app');
   }
+  // Add the admin panel URL to allowed CORS origins
+  if (!corsOrigins.includes('https://pukka-price-adminpanel.vercel.app')) {
+    corsOrigins.push('https://pukka-price-adminpanel.vercel.app');
+  }
 
   // ✅ Enable CORS for Fastify
   await app.register(fastifyCors, {
