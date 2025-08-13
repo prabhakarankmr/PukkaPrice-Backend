@@ -248,28 +248,18 @@ export class ProductsService {
       const limitNum = Math.min(parseInt(limit), 100);
       const skip = (pageNum - 1) * limitNum;
 
-      // Build where clause
-      const where: any = {};
 
-      // Add search condition (case-insensitive, on title OR description)
+      // Build where clause with AND for filters, OR for search
+      const where: any = {};
       if (search) {
         where.OR = [
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
         ];
       }
-
-      // Add category filter (exact match or slug)
       if (category) {
-        where.OR = where.OR || [];
-        where.OR.push(
-          { category: category },
-          { category: category.toUpperCase() },
-          { category: category.toLowerCase() },
-          { category: { equals: category, mode: 'insensitive' } }
-        );
+        where.category = { equals: category, mode: 'insensitive' };
       }
-
       if (subCategory) {
         where.subCategory = subCategory;
       }
@@ -308,6 +298,7 @@ export class ProductsService {
 
       const totalPages = Math.ceil(total / limitNum);
 
+      // Include debug info in response
       return {
         success: true,
         data: products,
@@ -327,6 +318,10 @@ export class ProductsService {
           deals,
           sortBy,
           sortOrder,
+        },
+        debug: {
+          searchQuery: search,
+          prismaWhere: where,
         },
       };
     } catch (error) {
