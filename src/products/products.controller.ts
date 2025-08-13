@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductQueryDto, SearchSuggestionsDto } from './dto/product-query.dto';
+import { ListProductsDto } from './dto/list-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FastifyRequest } from 'fastify';
@@ -73,17 +74,14 @@ export class ProductsController {
   }
 
   @Get('products')
-  async findAll(@Query() query: ProductQueryDto) {
-    // Handles /products (no search)
-    const { search, ...rest } = query;
-    if (search) {
-      // If search param is present, instruct user to use /products/search
-      return {
-        success: false,
-        message: 'Use /products/search?keyword=... for searching products.'
-      };
+  async listProducts(@Query() dto: ListProductsDto) {
+    if (dto.search && typeof dto.search === 'string' && dto.search.trim() !== '') {
+      // Call search logic internally (case-insensitive, partial match)
+      return await this.productsService.findAll({ search: dto.search });
+    } else {
+      // Normal listing logic
+      return await this.productsService.findAll({});
     }
-    return this.productsService.findAll(rest);
   }
 
 
@@ -105,10 +103,10 @@ export class ProductsController {
     return this.productsService.getSubcategoriesByCategory(category);
   }
 
-  // New endpoint: GET /subcategories
+  
   @Get('subcategories')
   getAllSubcategories() {
-    // Return all subcategories from the enum
+
     return {
       success: true,
       data: Object.values(SubCategory),
@@ -120,11 +118,7 @@ export class ProductsController {
     return this.productsService.getSearchSuggestions(q || '');
   }
 
-  @Get('products/search')
-  async searchProducts(@Query('keyword') keyword: string, @Query() query: ProductQueryDto) {
-    // Handles /products/search?keyword=...
-    return this.productsService.searchProducts(keyword, query);
-  }
+
 
   @Get('products/:id')
   async findOne(@Param('id') id: string) {
