@@ -14,7 +14,11 @@ export class ProductsService {
    * Constructs the public image URL from file name.
    */
   private getImageUrl(fileName: string): string {
-    return `http://localhost:${process.env.PORT || 3001}/uploads/${fileName}`;
+    // Always return a relative path in development, full URL in production
+    if (process.env.NODE_ENV === 'production') {
+      return `https://api.pukkaprice.com/uploads/${fileName}`;
+    }
+    return `/uploads/${fileName}`;
   }
 
   /**
