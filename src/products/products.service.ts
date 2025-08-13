@@ -211,7 +211,7 @@ export class ProductsService {
   }
 
   async findAll(query?: ProductQueryDto) {
-    try {
+  try {
       // If no query parameters, return all products
       if (!query || Object.keys(query).length === 0 || !query.search) {
         const products = await this.prisma.product.findMany({
@@ -327,7 +327,7 @@ export class ProductsService {
     } catch (error) {
       // Never throw a server error for a search query, always return empty array
       return {
-        success: true,
+        success: false,
         data: [],
         pagination: {
           currentPage: 1,
@@ -338,6 +338,9 @@ export class ProductsService {
           hasPrevPage: false,
         },
         filters: query || {},
+        debug: {
+          error: error?.message || error,
+        },
       };
     }
   }

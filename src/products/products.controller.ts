@@ -1,3 +1,4 @@
+
 import {
   Controller,
   Get,
@@ -83,7 +84,7 @@ export class ProductsController {
       return await this.productsService.findAll({});
     }
   }
-
+ 
 
 
   @Get('products/categories')
