@@ -251,14 +251,15 @@ export class ProductsService {
 
       // Build where clause with AND for filters, OR for search
       const where: any = {};
-      if (search) {
-        where.OR = [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ];
-      }
+        if (search) {
+          const lowered = search.toLowerCase();
+          where.OR = [
+            { title: { contains: lowered } },
+            { description: { contains: lowered } },
+          ];
+        }
       if (category) {
-        where.category = { equals: category, mode: 'insensitive' };
+        where.category = category;
       }
       if (subCategory) {
         where.subCategory = subCategory;
