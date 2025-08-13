@@ -1,3 +1,5 @@
+
+    
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductQueryDto } from './dto/product-query.dto';
@@ -8,6 +10,9 @@ import { join } from 'path';
 
 @Injectable()
 export class ProductsService {
+  getSubcategoriesByCategory(category: string) {
+    throw new Error('Method not implemented.');
+  }
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -67,6 +72,125 @@ export class ProductsService {
       },
     });
   }
+  async searchProducts(keyword: string, query?: ProductQueryDto) {
+      try {
+        if (!keyword) {
+          return {
+            success: true,
+            data: [],
+            pagination: {
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: 0,
+              itemsPerPage: 0,
+              hasNextPage: false,
+              hasPrevPage: false,
+            },
+            filters: query || {},
+          };
+        }
+
+        const {
+          category,
+          subCategory,
+          sourceWebsite,
+          deals,
+          sortBy = 'createdAt',
+          sortOrder = 'DESC',
+          page = '1',
+          limit = '20',
+        } = query || {};
+
+        const pageNum = parseInt(page);
+        const limitNum = Math.min(parseInt(limit), 100);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Build where clause
+        const where: any = {
+          OR: [
+            { title: { contains: keyword, mode: 'insensitive' } },
+            { description: { contains: keyword, mode: 'insensitive' } },
+          ],
+        };
+        if (category) {
+          where.category = category;
+        }
+        if (subCategory) {
+          where.subCategory = subCategory;
+        }
+        if (sourceWebsite) {
+          where.sourceWebsite = sourceWebsite;
+        }
+        if (deals !== undefined) {
+          where.deals = deals === 'true';
+        }
+
+        const [products, total] = await Promise.all([
+          this.prisma.product.findMany({
+            where,
+            orderBy: { [sortBy]: sortOrder.toLowerCase() },
+            skip,
+            take: limitNum,
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              imageUrl: true,
+              affiliateLink: true,
+              SEO_title: true,
+              META_description: true,
+              sourceWebsite: true,
+              category: true,
+              subCategory: true,
+              deals: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          }),
+          this.prisma.product.count({ where }),
+        ]);
+
+        const totalPages = Math.ceil(total / limitNum);
+
+        return {
+          success: true,
+          data: products,
+          pagination: {
+            currentPage: pageNum,
+            totalPages,
+            totalItems: total,
+            itemsPerPage: limitNum,
+            hasNextPage: pageNum < totalPages,
+            hasPrevPage: pageNum > 1,
+          },
+          filters: {
+            keyword,
+            category,
+            subCategory,
+            sourceWebsite,
+            deals,
+            sortBy,
+            sortOrder,
+          },
+        };
+      } catch (error) {
+        // Never throw a server error for a search query, always return empty array
+        console.error('Search error:', error);
+        return {
+          success: true,
+          data: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            itemsPerPage: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: query || {},
+        };
+      }
+    }
 
   /**
    * Deletes a product and removes its image file.
@@ -325,33 +449,10 @@ export class ProductsService {
       },
     });
 
-    return {
-      success: true,
-      data: products.map((item) => item.title),
-    };
-  }
-
-  async getSubcategoriesByCategory(category: string) {
-    const subCategories = await this.prisma.product.groupBy({
-      by: ['subCategory'],
-      where: {
-        category: category as any,
-      },
-      _count: {
-        subCategory: true,
-      },
-      orderBy: {
-        _count: {
-          subCategory: 'desc',
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: subCategories.map((item) => ({
-        subCategory: item.subCategory,
-        count: item._count.subCategory,
-      })),
-    };
-  }}
+        return {
+          success: true,
+          data: products.map((p) => p.title),
+        };
+      }
+    }
+      

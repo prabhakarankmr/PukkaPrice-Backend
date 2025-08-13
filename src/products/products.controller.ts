@@ -74,8 +74,19 @@ export class ProductsController {
 
   @Get('products')
   async findAll(@Query() query: ProductQueryDto) {
-    return this.productsService.findAll(query);
+    // Handles /products (no search)
+    const { search, ...rest } = query;
+    if (search) {
+      // If search param is present, instruct user to use /products/search
+      return {
+        success: false,
+        message: 'Use /products/search?keyword=... for searching products.'
+      };
+    }
+    return this.productsService.findAll(rest);
   }
+
+
 
   @Get('products/categories')
   async getCategories() {
@@ -87,6 +98,7 @@ export class ProductsController {
     query.deals = 'true';
     return this.productsService.findAll(query);
   }
+
 
   @Get('products/subcategories/:category')
   async getSubcategoriesByCategory(@Param('category') category: string) {
@@ -106,6 +118,12 @@ export class ProductsController {
   @Get('products/search/suggestions')
   async getSearchSuggestions(@Query() { q }: SearchSuggestionsDto) {
     return this.productsService.getSearchSuggestions(q || '');
+  }
+
+  @Get('products/search')
+  async searchProducts(@Query('keyword') keyword: string, @Query() query: ProductQueryDto) {
+    // Handles /products/search?keyword=...
+    return this.productsService.searchProducts(keyword, query);
   }
 
   @Get('products/:id')
