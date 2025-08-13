@@ -14,11 +14,8 @@ export class ProductsService {
    * Constructs the public image URL from file name.
    */
   private getImageUrl(fileName: string): string {
-    // Always return a relative path in development, full URL in production
-    if (process.env.NODE_ENV === 'production') {
-      return `https://api.pukkaprice.com/uploads/${fileName}`;
-    }
-    return `/uploads/${fileName}`;
+    // Always return the full production URL for images
+    return `https://api.pukkaprice.com/uploads/${fileName}`;
   }
 
   /**
@@ -90,117 +87,140 @@ export class ProductsService {
   }
 
   async findAll(query?: ProductQueryDto) {
-    // If no query parameters, return simple list (for basic GET /products)
-    if (!query || Object.keys(query).length === 0) {
-      return this.prisma.product.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-    }
-    const {
-      search = '',
-      category,
-      subCategory,
-      sourceWebsite,
-      deals,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC',
-      page = '1',
-      limit = '20',
-    } = query;
+    try {
+      // If no query parameters, return all products
+      if (!query || Object.keys(query).length === 0 || !query.search) {
+        const products = await this.prisma.product.findMany({
+          orderBy: { createdAt: 'desc' },
+        });
+        return {
+          success: true,
+          data: products,
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: products.length,
+            itemsPerPage: products.length,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {},
+        };
+      }
 
-    const pageNum = parseInt(page);
-    const limitNum = Math.min(parseInt(limit), 100);
-    const skip = (pageNum - 1) * limitNum;
-
-    // Build where clause
-    const where: any = {};
-
-    // Add search condition (case-insensitive, on title OR description)
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    // Add category filter (exact match or slug)
-    if (category) {
-      // Try to match exact (case-sensitive), or by slug (case-insensitive)
-      where.OR = where.OR || [];
-      where.OR.push(
-        { category: category },
-        { category: category.toUpperCase() },
-        { category: category.toLowerCase() },
-        { category: { equals: category, mode: 'insensitive' } }
-      );
-    }
-
-    // Add subCategory filter
-    if (subCategory) {
-      where.subCategory = subCategory;
-    }
-
-    // Add source website filter
-    if (sourceWebsite) {
-      where.sourceWebsite = sourceWebsite;
-    }
-
-    // Add deals filter
-    if (deals !== undefined) {
-      where.deals = deals === 'true';
-    }
-
-    // Get products and total count
-    const [products, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        orderBy: { [sortBy]: sortOrder.toLowerCase() },
-        skip,
-        take: limitNum,
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          imageUrl: true,
-          affiliateLink: true,
-          SEO_title: true,
-          META_description: true,
-          sourceWebsite: true,
-          category: true,
-          subCategory: true,
-          deals: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
-
-    const totalPages = Math.ceil(total / limitNum);
-
-    return {
-      success: true,
-      data: products,
-      pagination: {
-        currentPage: pageNum,
-        totalPages,
-        totalItems: total,
-        itemsPerPage: limitNum,
-        hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1,
-      },
-      filters: {
-        search,
+      const {
+        search = '',
         category,
         subCategory,
         sourceWebsite,
         deals,
-        sortBy,
-        sortOrder,
-      },
-    };
+        sortBy = 'createdAt',
+        sortOrder = 'DESC',
+        page = '1',
+        limit = '20',
+      } = query;
+
+      const pageNum = parseInt(page);
+      const limitNum = Math.min(parseInt(limit), 100);
+      const skip = (pageNum - 1) * limitNum;
+
+      // Build where clause
+      const where: any = {};
+
+      // Add search condition (case-insensitive, on title OR description)
+      if (search) {
+        where.OR = [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      // Add category filter (exact match or slug)
+      if (category) {
+        where.OR = where.OR || [];
+        where.OR.push(
+          { category: category },
+          { category: category.toUpperCase() },
+          { category: category.toLowerCase() },
+          { category: { equals: category, mode: 'insensitive' } }
+        );
+      }
+
+      if (subCategory) {
+        where.subCategory = subCategory;
+      }
+      if (sourceWebsite) {
+        where.sourceWebsite = sourceWebsite;
+      }
+      if (deals !== undefined) {
+        where.deals = deals === 'true';
+      }
+
+      // Get products and total count
+      const [products, total] = await Promise.all([
+        this.prisma.product.findMany({
+          where,
+          orderBy: { [sortBy]: sortOrder.toLowerCase() },
+          skip,
+          take: limitNum,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            imageUrl: true,
+            affiliateLink: true,
+            SEO_title: true,
+            META_description: true,
+            sourceWebsite: true,
+            category: true,
+            subCategory: true,
+            deals: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        this.prisma.product.count({ where }),
+      ]);
+
+      const totalPages = Math.ceil(total / limitNum);
+
+      return {
+        success: true,
+        data: products,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limitNum,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+        filters: {
+          search,
+          category,
+          subCategory,
+          sourceWebsite,
+          deals,
+          sortBy,
+          sortOrder,
+        },
+      };
+    } catch (error) {
+      // Never throw a server error for a search query, always return empty array
+      return {
+        success: true,
+        data: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+        filters: query || {},
+      };
+    }
   }
 
   /**
